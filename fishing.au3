@@ -96,7 +96,7 @@ Func start()
 			ConsoleWrite(@LF & "----------------=Ќовый 'раунд'=------------------" & @LF)
 			Do
 				;если полоска сдвинулась вправо - запоминаем врем€.
-				ConsoleWrite("текущ. позици€: " & $curPos[0] & @LF)
+				;ConsoleWrite("текущ. позици€: " & $curPos[0] & @LF)
 				if aproxEqual(PixelGetColor($curPos[0], $curPos[1]), $bColor) then 
 					$lineGrownTime = TimerInit()
 					ConsoleWrite(round(timerDiff($startTime)) & " : полоска сдвинулась вправо - запоминаем врем€" & @LF)
@@ -121,15 +121,15 @@ Func start()
 					ConsoleWrite(TimerDiff($lineGrownTime) & " : TimerDiff($lineGrownTime)" & @LF)
 					$reelingUsedTime = TimerInit()
 					ConsoleWrite(timerDiff($startTime) & " : юзаем скилл reeling" & @LF)
-					$sleepTime = 20
+					$sleepTime = 10
 				endIf
 				;если за последнюю секунду(чуть больше на вс€кий случай) лини€ не увеличивалась, то юзаем скилл pumping
-				if TimerDiff($lineGrownTime) > 1100 and TimerDiff($pumpingUsedTime)>2000 then 
+				if TimerDiff($lineGrownTime) > 1000 and TimerDiff($pumpingUsedTime)>2000 and TimerDiff($reelingUsedTime)>500 then 
 					ConsoleWrite("лини€ не двигалась - " & timerDiff($lineGrownTime) &  @LF)
 					send("{F2}")
 					$pumpingUsedTime = TimerInit()
 					ConsoleWrite(timerDiff($startTime) & " : юзаем скилл pumping" & @LF)
-					$sleepTime = 20
+					$sleepTime = 10
 					;ConsoleWrite("delay=" & $i*50 & " позици€: " & $curPos[0] & "  color: " & hex(PixelGetColor($curPos[0], $curPos[1])) & @LF)
 					;ConsoleWrite(" позици€: " & $curPos[0] & "  color: " & hex(PixelGetColor($curPos[0], $curPos[1])) & @LF)
 				endIf	
@@ -143,12 +143,6 @@ EndFunc
 
 func temp()
 	ConsoleWrite(" позици€: " & $linePos[0] & "  color: " & hex(PixelGetColor($linePos[0], $linePos[1])) & @LF)
-EndFunc
-
-func logVars($vars)
-	for $var in $vars
-		ConsoleWrite($var & " = " & eval($var) & " | ")
-	Next
 EndFunc
 
 Func getState()
@@ -165,7 +159,7 @@ Func getState()
 EndFunc
 
 Func setState($val)
-	If ($state <> 0) then $state = $val
+	If ($state <> 0 or $val = 0) then $state = $val
 EndFunc
 
 Func setLinePos() 
@@ -177,7 +171,7 @@ Func setLinePos()
 	While aproxEqual($curColor,$bColor) ;$curColor == $bColor
 		$curPos[0] -= 1
 		$curColor = PixelGetColor($curPos[0], $curPos[1])
-		ConsoleWrite($curPos[0] & " - " & hex($curColor,6) & @LF)
+		;ConsoleWrite($curPos[0] & " - " & hex($curColor,6) & @LF)
 	WEnd
 	ConsoleWrite("before start color: " & hex(PixelGetColor($curPos[0], $curPos[1])) & @LF)
 	$linePos[0] = $curPos[0]+1 ;«аписываем сюда ’ начала полоски
