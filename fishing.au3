@@ -1,3 +1,7 @@
+#cs
+author - Ovsyanka (https://github.com/Ovsyanka)
+#ce
+
 $g_szVersion = "Fishing Bot La2"
 If WinExists($g_szVersion) Then WinKill ($g_szVersion) ; Он уже запущен
 AutoItWinSetTitle($g_szVersion)
