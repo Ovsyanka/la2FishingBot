@@ -37,12 +37,12 @@ Global $action = 0
 5-ждем моба после ловли
 6-деремся с мобом
 #ce
-Global $bColor = -1 ;Цвет левой части полоски(Голубой)
-Global $hpColor = -1 ;
-Global $fwColor = -1 ;
-Global $linePos[2] = [-1, -1] ;массив с х и у точки на полоске рыбалки
-Global $fwPos[2] = [-1, -1] ;массив с х и у 
-Global $hpFullPos[2] = [-1, -1] ;массив с х и у точки на конце полоски hp
+Global $bColor = -1 ;1085142 ;Цвет левой части полоски(Голубой)
+Global $hpColor = -1 ;14558282 ;-1 ;
+Global $fwColor = -1 ;00101831 ;
+Global $linePos[2] = [-1, -1] ;[216, 364] ;массив с х и у точки на полоске рыбалки
+Global $fwPos[2] = [-1, -1] ;[242, 135] ;массив с х и у 
+Global $hpFullPos[2] = [-1, -1] ;[169, 71] ;массив с х и у точки на конце полоски hp
 Global $toolTipPos[2] = [0, 0]
 global $startTime = TimerInit()
 
@@ -161,7 +161,9 @@ Func startFishing()
 	If Not chkFishWindow() Then 
 		Send("{F5}") ;удочка
 		;туду Сделать выбор оодной з трех наживок.
-		;Send("{F6}") ;наживка
+		Sleep(500)
+		Send("{F8}") ;наживка
+		Sleep(500)
 		Send("{F1}")
 	EndIf
 	Sleep(1000)
@@ -205,7 +207,7 @@ Func fishing()
 			WEnd
 			
 			Dim $msg[7] = ["  полоска вправо -", "lst:", $lst, "lgt:",$lgt, "новая позиция:", $curPos[0]]
-			Logg($msg, 3)
+			Logg($msg, 1)
 		EndIf
 		
 		if Not aproxEqual($curPos[0]-1, $curPos[1], $bColor) then
@@ -214,11 +216,11 @@ Func fishing()
 			WEnd
 			$lst = TimerInit()
 			Dim $msg[7] = ["  полоска влево -", "lst:", $lst, "lgt:",$lgt, "новая позиция:", $curPos[0]]
-			Logg($msg, 3)
+			Logg($msg, 1)
 		endIf
 		
 		if $lst <= $lgt And TimerDiff($lgt) < 1000 and TimerDiff($rut)>2000 then 
-			send("{F7}")
+			send("{F4}")
 			send("{F3}")
 			Dim $msg[7] = [" reeling -", "dlst:", TimerDiff($lst), "dlgt:", TimerDiff($lgt), "drut:", TimerDiff($rut)]
 			$rut = TimerInit()
@@ -230,7 +232,7 @@ Func fishing()
 		endIf
 
 		if TimerDiff($lgt) > 1000 And TimerDiff($lst) > 1000 and TimerDiff($put)>2000 then 
-			send("{F7}")
+			send("{F4}")
 			send("{F2}")
 			$put = TimerInit()
 			;$lst = TimerInit() ;подумать
@@ -245,99 +247,6 @@ Func fishing()
 	
 EndFunc
 
-Func fishing1()
-	;если полоска побелела, проверки не производить. реакции не нреагировать)
-	;сл-но написать процедуру проверки на побеление полоски
-	;при изменении координат полоски нужно изменить $curPos
-	;test-----------
-	;while chkFishing()
-	;	sleep(1000)
-	;	ConsoleWrite("Ловим рыбу - ")
-	;wend
-	;return
-	;----------------
-	;showMsg("Ловим рыбу")
-	ConsoleWrite(@LF & "Ловим рыбу - ")
-	local $curPos = $linePos ;+стандартное значение.
-	;задаем текущую позицию конца полоски
-	while $bColor == PixelGetColor($curPos[0], $curPos[1])
-		$curPos[0] += 1
-	WEnd
-	ConsoleWrite(" позиция: " & $curPos[0] & "  color: " & hex(PixelGetColor($curPos[0], $curPos[1])) & @LF)
-	;цикл
-	dim $lineGrownTime = TimerInit(), $reelingUsedTime = 0, $pumpingUsedTime = 0
-	Dim $lineStartTime = TimerInit()
-	dim $sleepTime = 100
-	;ConsoleWrite("$lineGrownTime = " & timerDiff($startTime) & " | $reelingUsedTime = " & $reelingUsedTime & " | $pumpingUsedTime = " & $pumpingUsedTime & @LF)
-	;sleep(1000)
-	ConsoleWrite(@LF & "----------------=Новый 'раунд'=------------------" & @LF)
-	while chkFishing()
-		ConsoleWrite("1")
-		If IsShining($linePos[0], $linePos[1], $bColor) Then
-			ConsoleWrite("2")
-			Sleep(200)
-			$lineStartTime = TimerInit()
-			ContinueLoop
-		endif
-		;если полоска сдвинулась вправо - запоминаем время.
-		;пока при ошибке будет считаться. что полоска увелиилась...
-		;потом можно сделать проверку, чтобы полоска увеличилась два раза или по размеру увеличения
-		ConsoleWrite("текущ. позиция: " & $curPos[0] & @LF)
-		if(PixelGetColor($curPos[0], $curPos[1]) == $bColor) then 
-			$lineGrownTime = TimerInit()
-			$lineStartTime = $lineGrownTime
-			ConsoleWrite(round(timerDiff($startTime)) & " : полоска сдвинулась вправо - запоминаем время" & @LF)
-			while $bColor == PixelGetColor($curPos[0], $curPos[1])
-				$curPos[0] += 1
-			WEnd
-			ConsoleWrite(" позиция: " & $curPos[0] & "  color: " & hex(PixelGetColor($curPos[0], $curPos[1])) & @LF)
-			$sleepTime = 100
-		EndIf
-		;если полоска сдвинулась влево - изменяем координаты.
-		if PixelGetColor($curPos[0]-1, $curPos[1]) <> $bColor then
-			ConsoleWrite(round(timerDiff($startTime)) & " : полоска сдвинулась влево - изменяем координаты" & @LF)
-			local $tmpPos = $curPos[0]
-			while PixelGetColor($tmpPos-1, $curPos[1]) <> $bColor and $tmpPos>$linePos[0]
-				$tmpPos -= 1
-			WEnd
-			;if ($tmpPos==$linePos[0]) Then
-			;	ConsoleWrite(" результат не засчитан ")
-			;	;$lineGrownTime = TimerInit() - 1050
-			;Else
-			$curPos[0] = $tmpPos
-			$lineStartTime = TimerInit()
-			;EndIf
-			ConsoleWrite(" позиция: " & $curPos[0] & "  color: " & hex(PixelGetColor($curPos[0], $curPos[1])) & @LF)
-			$sleepTime = 100
-		endIf	
-		;если за последнюю секунду линия увеличивалась, то юзаем скилл reeling
-		if $lineStartTime <= $lineGrownTime And TimerDiff($lineGrownTime) < 1000 and TimerDiff($reelingUsedTime)>2000 then 
-			send("{F3}")
-			send("{F7}")
-			ConsoleWrite($lineStartTime & "<" & $lineGrownTime & TimerDiff($lineGrownTime) & " : TimerDiff($lineGrownTime)" & @LF)
-			$reelingUsedTime = TimerInit()
-			ConsoleWrite(timerDiff($startTime) & " : юзаем скилл reeling" & @LF)
-			;$sleepTime = 20
-		endIf
-		;если за последнюю секунду(чуть больше на всякий случай) линия не увеличивалась, то юзаем скилл pumping
-		;непосредстенно перед использованием проверить еще раз на увеличение?
-		if TimerDiff($lineGrownTime) > 1000 And TimerDiff($lineStartTime) < 1000 and TimerDiff($pumpingUsedTime)>2000 then 
-			ConsoleWrite("линия не двигалась - " & timerDiff($lineGrownTime) &  @LF)
-			send("{F2}")
-			send("{F7}")
-			$pumpingUsedTime = TimerInit()
-			$lineStartTime = TimerInit()
-			ConsoleWrite(timerDiff($startTime) & " : юзаем скилл pumping" & @LF)
-			;$sleepTime = 20
-			;ConsoleWrite("delay=" & $i*50 & " позиция: " & $curPos[0] & "  color: " & hex(PixelGetColor($curPos[0], $curPos[1])) & @LF)
-			;ConsoleWrite(" позиция: " & $curPos[0] & "  color: " & hex(PixelGetColor($curPos[0], $curPos[1])) & @LF)
-		endIf	
-		sleep($sleepTime)
-	wend
-	;sleep(2000)
-	;setState(1)
-EndFunc
-
 ;проверяет совпадает ли цвет в точе линии с тем, что должен быть. (начачло линии)
 Func IsShining($x, $y, $c)
 	ConsoleWrite(" IsShining: " & (Not aproxEqual($x, $y, $c)) & " " & Hex($c) & "<=>" & hex(PixelGetColor($x, $y)) & "  ")
@@ -347,25 +256,27 @@ EndFunc
 func waitingMob()
 	;Сделать проверку на таргет. Если моб затаргетился - значит он есть.
 	ConsoleWrite(@LF & "waitingMob")
-	sleep(2000)
+	sleep(1000)
 EndFunc
 	
 func selfProtection()
-	do
+	;do
 		ConsoleWrite(" - selfProtection")
-		sleep(2000)
-	until not chkLossHp()
-	return
+	;	sleep(2000)
+	;until not chkLossHp()
+	;return
 	;----
 	send("{F9}") ;Берем оружие
 	do
+		#CS
 		if chkLossHp($hpHalfPos) then
 			send("{F6}") ;выбираем себя
 			sleep(200)
 			send("{F11}") ;Лечимся
-		endif
+		 endif
+		 #CE
 		if chkLossHp() then
-			send("{F5}") ;выбираем моба
+			send("{F7}") ;выбираем моба
 			sleep(200)
 			send("{F10}") ;Хреначим
 		EndIf
@@ -374,9 +285,11 @@ func selfProtection()
 		;sleep(200)
 		;send("{F11}") ;Лечимся
 	until not chkLossHp()
-	send("{F7}") ;Берем удочку
+	send("{F5}") ;Берем удочку
 	sleep(200)
-	send("{F8}") ;Берем приманку
+	send("{F8}") ;ktxbvcz
+	sleep(200)
+	;send("{F}") ;Берем приманку
 EndFunc
 
 Func setLinePos() 
@@ -388,7 +301,7 @@ Func setLinePos()
 		$curPos[0] -= 1
 		;$curColor = PixelGetColor($curPos[0], $curPos[1])
 	WEnd
-	Dim $msg[6] = ["line Coord: ", $linePos[0],"-", $curPos[0]+1, "b color: ", hex($bColor)]
+	Dim $msg[7] = ["line Coord: ", $linePos[0],"-", $curPos[0]+1,$linePos[1], "b color: ", $bColor]
 	Logg($msg, 1)
 	$linePos[0] = $curPos[0]+1 ;Записываем сюда Х начала полоски
 	
@@ -408,8 +321,8 @@ Func setHpFullPos()
 		$curColor = PixelGetColor($curPos[0], $curPos[1])
 		;ConsoleWrite("x: " & $curPos[0] & " y: " & $curPos[1] & " color: " & $curColor & @LF)
 	WEnd
-	$hpFullPos[0] = $curPos[0]-1 ;Записываем сюда Х
-	Logg("Helth set: " & $hpFullPos[0] & ":" & $hpFullPos[1] & " " & Hex($hpColor))
+	$hpFullPos[0] = $curPos[0]-101 ;Записываем сюда Х
+	Logg("Helth set: " & $hpFullPos[0] & ":" & $hpFullPos[1] & " " & $hpColor)
 	showMsg("Координаты здоровья заданы")
 EndFunc
 
@@ -429,9 +342,13 @@ EndFunc
 Func showMsg($text, $title='Info:') 
 	;ToolTip($text, $toolTipPos[0], $toolTipPos[1], $title)
 	TrayTip($title, $text, 3)
- EndFunc
- 
+EndFunc
+
 func aproxEqual($x, $y, $c, $retCoords = False)
+	Return PixelGetColor($x, $y) == $c
+EndFunc
+
+func aproxEqual_($x, $y, $c, $retCoords = False)
 	Local $r = PixelSearch ($x, $y, $x, $y, $c, 7)
 	If @error Then 
 		Return false 
