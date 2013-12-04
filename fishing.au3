@@ -11,8 +11,8 @@ Opt("MustDeclareVars", 1)
 Opt("WinTitleMatchMode", 3)
 Opt("TrayAutoPause", 0)
 Opt("TrayIconDebug", 1)
-Opt("MouseCoordMode", 0) ;0 = относительные координаты активного окна
-Opt("PixelCoordMode", 0) ;0 = относительные координаты активного окна
+;Opt("MouseCoordMode", 0) ;0 = относительные координаты активного окна
+;Opt("PixelCoordMode", 0) ;0 = относительные координаты активного окна
 ;Задаем глобальные переменные
 Global $state = 0
 #csСостояние программы
@@ -24,11 +24,8 @@ Global $state = 0
 6-теряем здоровье
 #ce
 Global $bColor = -1 ;Цвет левой части полоски(Голубой)
-Global $hpColor = -1 ;
-Global $fwColor = -1 ;
 ;Global $rColor = -1 ;Цвет правой части полоски(Красный)
 Global $linePos[2] = [-1, -1] ;массив с х и у точки на полоске рыбалки
-Global $fwPos[2] = [-1, -1] ;массив с х и у 
 Global $hpFullPos[2] = [-1, -1] ;массив с х и у точки на конце полоски hp
 Global $hpHalfPos[2] = [-1, -1] ;массив с х и у точки на (середине) полоски hp
 Global $hpNonePos[2] = [-1, -1] ;массив с х и у точки на начале полоски hp
@@ -54,37 +51,6 @@ While 1
 	Sleep(1000) ;Не знаю, имеет ли какое-то значение аргумент в данном случае
 WEnd
 
-Func chkState() 
-	Switch $state
-	Case 0
-		showMsg("Скрипт остановлен")
-	Case 1
-		showMsg("Состояние неизвестно")
-		if chkLossHp() then setState(5)
-		elseif chkFishing() then setState(4)
-		elseif chkFishWaiting() then setState(3)
-		else setState(2)
-	
-	Case 2
-		showMsg("Курим бамбук")
-	Case 3
-		showMsg("Ждем рыбу")
-	Case 4
-		showMsg("Ловим рыбу рыбу")
-	Case 5
-		showMsg("Спасаем свою шкуру")
-	EndSwitch
-endFunc
-
-func chkLossHp()
-	return PixelGetColor($hpPos[0], $hpPos[1]) == $hpColor
-EndFunc
-func chkFishing()
-	return PixelGetColor($linePos[0], $linePos[1]) == $bColor
-EndFunc
-func chkFishWaiting()
-	return PixelGetColor($fwPos[0], $fwPos[1]) == $fwColor
-EndFunc
 Func start()
 	
 	;TrayTip("La2 FishBot", "Start", 0)
@@ -109,15 +75,15 @@ Func start()
 			setState(3)
 			showMsg("Закидываем удочку","Состояние:")
 		Case 3
-			If (PixelGetColor($linePos[0], $linePos[1]) == $bColor) Then setState(4)
+			If aproxEqual(PixelGetColor($linePos[0], $linePos[1]),$bColor) Then setState(4)
 			showMsg("Ждем рыбу","Состояние:")
 		Case 4
 			showMsg("Ловим рыбу","Состояние:")
 			ConsoleWrite("c4")
-			If (PixelGetColor($linePos[0], $linePos[1]) <> $bColor) Then setState(2)
+			If not aproxEqual(PixelGetColor($linePos[0], $linePos[1]),$bColor) Then setState(2)
 			local $curPos = $linePos ;+стандартное значение.
 			;задаем текущую позицию конца полоски
-			while $bColor == PixelGetColor($curPos[0], $curPos[1])
+			while aproxEqual($bColor,PixelGetColor($curPos[0], $curPos[1]))
 				$curPos[0] += 1
 			WEnd
 			ConsoleWrite(" позиция: " & $curPos[0] & "  color: " & hex(PixelGetColor($curPos[0], $curPos[1])) & @LF)
@@ -131,19 +97,19 @@ Func start()
 			Do
 				;если полоска сдвинулась вправо - запоминаем время.
 				ConsoleWrite("текущ. позиция: " & $curPos[0] & @LF)
-				if(PixelGetColor($curPos[0], $curPos[1]) == $bColor) then 
+				if aproxEqual(PixelGetColor($curPos[0], $curPos[1]), $bColor) then 
 					$lineGrownTime = TimerInit()
 					ConsoleWrite(round(timerDiff($startTime)) & " : полоска сдвинулась вправо - запоминаем время" & @LF)
-					while $bColor == PixelGetColor($curPos[0], $curPos[1])
+					while aproxEqual($bColor,PixelGetColor($curPos[0], $curPos[1]))
 						$curPos[0] += 1
 					WEnd
 					ConsoleWrite(" позиция: " & $curPos[0] & "  color: " & hex(PixelGetColor($curPos[0], $curPos[1])) & @LF)
 					$sleepTime = 100
 				EndIf
 				;если полоска сдвинулась влево - изменяем координаты.
-				if PixelGetColor($curPos[0]-1, $curPos[1]) <> $bColor then
+				if not aproxEqual(PixelGetColor($curPos[0]-1, $curPos[1]), $bColor) then
 					ConsoleWrite(round(timerDiff($startTime)) & " : полоска сдвинулась влево - изменяем координаты" & @LF)
-					while PixelGetColor($curPos[0]-1, $curPos[1]) <> $bColor and $curPos[0]>$linePos[0]
+					while not aproxEqual(PixelGetColor($curPos[0]-1, $curPos[1]), $bColor) and $curPos[0]>$linePos[0]
 						$curPos[0] -= 1
 					WEnd
 					ConsoleWrite(" позиция: " & $curPos[0] & "  color: " & hex(PixelGetColor($curPos[0], $curPos[1])) & @LF)
@@ -158,7 +124,7 @@ Func start()
 					$sleepTime = 20
 				endIf
 				;если за последнюю секунду(чуть больше на всякий случай) линия не увеличивалась, то юзаем скилл pumping
-				if TimerDiff($lineGrownTime) > 1200 and TimerDiff($pumpingUsedTime)>2000 then 
+				if TimerDiff($lineGrownTime) > 1100 and TimerDiff($pumpingUsedTime)>2000 then 
 					ConsoleWrite("линия не двигалась - " & timerDiff($lineGrownTime) &  @LF)
 					send("{F2}")
 					$pumpingUsedTime = TimerInit()
@@ -168,8 +134,8 @@ Func start()
 					;ConsoleWrite(" позиция: " & $curPos[0] & "  color: " & hex(PixelGetColor($curPos[0], $curPos[1])) & @LF)
 				endIf	
 				sleep($sleepTime)
-			Until PixelGetColor($linePos[0], $linePos[1]) <> $bColor
-			ConsoleWrite("lol")
+			Until not aproxEqual(PixelGetColor($linePos[0], $linePos[1]),$bColor)
+			ConsoleWrite("out of cycle" & $linePos[0] & " : " & $linePos[1])
 		EndSwitch
 		Sleep(500)
 	WEnd
@@ -204,13 +170,16 @@ EndFunc
 
 Func setLinePos() 
 	$linePos = MouseGetPos()
+	ConsoleWrite(@LF & "set mouse line x: " & $linePos[0] & @LF)
 	$bColor = PixelGetColor($linePos[0], $linePos[1]) ;Hex($bColor, 6)
 	ConsoleWrite(" b color: " & hex($bColor) & @LF)
 	Local $curPos = $linePos, $curColor = $bColor
-	While $curColor == $bColor
+	While aproxEqual($curColor,$bColor) ;$curColor == $bColor
 		$curPos[0] -= 1
 		$curColor = PixelGetColor($curPos[0], $curPos[1])
+		ConsoleWrite($curPos[0] & " - " & hex($curColor,6) & @LF)
 	WEnd
+	ConsoleWrite("before start color: " & hex(PixelGetColor($curPos[0], $curPos[1])) & @LF)
 	$linePos[0] = $curPos[0]+1 ;Записываем сюда Х начала полоски
 	;Local $curPos = $linePos, $curColor = $bColor
 	;While $curColor == $bColor
@@ -218,10 +187,25 @@ Func setLinePos()
 	;	$curColor = PixelGetColor($curPos[0], $curPos[1])
 	;WEnd
 	;$rColor = $curColor
+	ConsoleWrite("start line x: " & $linePos[0] & @LF)
 	showMsg("Координаты полоски рыбалки заданы: " & @LF _
 			& $linePos[0] & ":" & $linePos[1] & @LF _
 			& "Цвета: " & $bColor & @LF _ 
-			& "Координаты конца: " & $curPos[0] & ":" & $curPos[1])
+			& "Координаты начала: " & $curPos[0] & ":" & $curPos[1])
+EndFunc
+
+func aproxEqual($first, $second)
+	local $t1, $t2
+	$first = hex($first,6)
+	$second = hex($second,6)
+	for $i = 1 to 5 step 2
+		$t1 = dec(StringMid($first, $i, 2))
+		$t2 = dec(StringMid($second, $i, 2))
+		if abs($t1 - $t2) >= 7 then return 0
+	next 
+	
+	;if (StringMid($first, 1, 1) == StringMid($second, 1, 1) and StringMid($first, 3, 1) == StringMid($second, 3, 1) and StringMid($first, 5, 1) == StringMid($second, 5, 1)) then return 1
+	return 1
 EndFunc
 
 Func quit()
